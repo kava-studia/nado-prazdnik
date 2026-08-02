@@ -13,11 +13,31 @@ export default defineConfig(() => ({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-core': ['react', 'react-dom'],
-          router: ['react-router-dom'],
-          motion: ['motion'],
-          icons: ['lucide-react'],
+        manualChunks(id) {
+          const normalizedId = id.replace(/\\/g, '/');
+
+          if (normalizedId.includes('/node_modules/react/')
+            || normalizedId.includes('/node_modules/react-dom/')
+            || normalizedId.includes('/node_modules/scheduler/')) {
+            return 'react-core';
+          }
+
+          if (normalizedId.includes('/node_modules/react-router')
+            || normalizedId.includes('/node_modules/@remix-run/router/')) {
+            return 'router';
+          }
+
+          if (normalizedId.includes('/node_modules/motion/')
+            || normalizedId.includes('/node_modules/motion-dom/')
+            || normalizedId.includes('/node_modules/motion-utils/')) {
+            return 'motion';
+          }
+
+          if (normalizedId.includes('/node_modules/lucide-react/')) {
+            return 'icons';
+          }
+
+          return undefined;
         },
       },
     },
