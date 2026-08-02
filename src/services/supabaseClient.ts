@@ -164,7 +164,6 @@ export async function verifyEmailOtp(email: string, token: string): Promise<Supa
 
   const session = normalizeSession(await response.json());
   saveSession(session);
-  await recordAuthenticatedLogin(session).catch(() => undefined);
   return loadUserSnapshot(session);
 }
 
@@ -195,7 +194,6 @@ export async function verifyPhoneOtp(phone: string, token: string): Promise<Supa
 
   const session = normalizeSession(await response.json());
   saveSession(session);
-  await recordAuthenticatedLogin(session).catch(() => undefined);
   return loadUserSnapshot(session);
 }
 
@@ -325,16 +323,6 @@ export async function getSupabaseUserSnapshot(): Promise<SupabaseUserSnapshot | 
     }
     throw error;
   }
-}
-
-export async function recordAuthenticatedLogin(sessionOverride?: SupabaseSession): Promise<void> {
-  const session = sessionOverride || (await getValidSession());
-  if (!session) return;
-  await fetch(`${SUPABASE_URL}/rest/v1/rpc/record_authenticated_login`, {
-    method: 'POST',
-    headers: authHeaders(session.access_token),
-    body: '{}'
-  });
 }
 
 export async function getAuthAuditLogs(): Promise<AuthAuditView[]> {
