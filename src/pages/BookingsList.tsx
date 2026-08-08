@@ -10,19 +10,19 @@ import { useRepositories } from '../repositories/RepositoryProvider';
 
 export default function BookingsList() {
   const navigate = useNavigate();
-  const { bookingsRepository } = useRepositories();
+  const { orderRepository } = useRepositories();
   const [bookings, setBookings] = useState<Booking[]>([]);
 
   useEffect(() => {
     let isMounted = true;
-    bookingsRepository.getBookings().then(list => {
+    orderRepository.listOrders().then(list => {
       if (isMounted) setBookings(list || []);
     }).catch(e => {
       console.error(e);
       if (isMounted) setBookings([]);
     });
     return () => { isMounted = false; };
-  }, [bookingsRepository]);
+  }, [orderRepository]);
 
   return (
     <div className="min-h-screen pb-32 flex flex-col justify-between font-sans text-[var(--text-primary)] animate-fade-in" id="bookings-list-view">

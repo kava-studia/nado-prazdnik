@@ -35,7 +35,7 @@ import {
   FormField,
   BottomSheet
 } from '../components/UI';
-import { EventProject, Task, Message, Booking, BudgetCategory, EventPlanItem, CustomGuest } from '../types';
+import { EventProject, Task, Message, Booking, BudgetCategory, EventPlanItem, EventPlanStatus, CustomGuest } from '../types';
 import { getProjects, getActiveProjectId, setActiveProjectId, saveProject } from '../services/eventlyStorage';
 import { calculateProjectProgress } from '../utils/projectProgress';
 import { resolveNextAction } from '../utils/nextActionResolver';
@@ -306,7 +306,7 @@ export default function ProjectDashboard() {
   const handleTogglePlanItemCompleted = (itemId: string) => {
     const updatedPlan = (project.planItems || []).map((item) => {
       if (item.id === itemId) {
-        const nextStatus = item.status === 'completed' ? 'not_started' : 'completed';
+        const nextStatus: EventPlanStatus = item.status === 'completed' ? 'not_started' : 'completed';
         return { ...item, status: nextStatus };
       }
       return item;
@@ -883,7 +883,7 @@ export default function ProjectDashboard() {
 
                     <div className="text-right flex sm:flex-col justify-between w-full sm:w-auto items-center sm:items-end gap-2 border-t sm:border-t-0 border-[var(--color-border)] pt-3 sm:pt-0">
                       <span className="text-xs sm:text-sm font-bold text-[var(--color-gold-deep)] font-mono">
-                        {(b.totalPrice || 0).toLocaleString()} ₽
+                        {(b.price + b.extraCosts).toLocaleString()} ₽
                       </span>
                       <button
                         onClick={() => navigate(`/events/${project.id}/contractors/${b.contractorId}`)}
@@ -1170,13 +1170,13 @@ export default function ProjectDashboard() {
                   {/* Calculations details */}
                   <div className="premium-glass-card p-5 space-y-4 shadow-sm">
                     <h4 className="font-bold text-sm text-[var(--color-text)] border-b border-[var(--color-border)] pb-2">Рекомендованный объём закупки</h4>
-                    {project.drinksCalculation.items && project.drinksCalculation.items.map((drinkItem: any, idx: number) => (
-                      <div key={idx} className="flex justify-between items-center text-sm border-b border-[var(--color-border)] pb-2.5 last:border-0 last:pb-0">
+                    {project.drinksCalculation.savedDrinksList.map((drinkItem) => (
+                      <div key={drinkItem.id} className="flex justify-between items-center text-sm border-b border-[var(--color-border)] pb-2.5 last:border-0 last:pb-0">
                         <div>
-                          <p className="font-bold text-[var(--color-text)]">{drinkItem.drinkType}</p>
-                          <span className="text-xs text-[var(--color-text-secondary)]">Рекомендовано {drinkItem.bottlesCount} бутылок по {drinkItem.bottleVolume}л</span>
+                          <p className="font-bold text-[var(--color-text)]">{drinkItem.name}</p>
+                          <span className="text-xs text-[var(--color-text-secondary)]">Рекомендовано {drinkItem.bottles} бутылок, {drinkItem.liters.toLocaleString('ru-RU')} л</span>
                         </div>
-                        <span className="text-sm font-bold text-[var(--color-gold-deep)] font-mono">{drinkItem.estimatedPrice?.toLocaleString('ru-RU')} ₽</span>
+                        <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-gold-deep)]">{drinkItem.category}</span>
                       </div>
                     ))}
                   </div>

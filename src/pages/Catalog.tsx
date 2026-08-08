@@ -63,7 +63,7 @@ const categoryPluralMap: Record<string, string> = {
 export default function Catalog() {
   const { category: rawCategory = 'djs' } = useParams<{ category: string }>();
   const navigate = useNavigate();
-  const { contractorsRepository } = useRepositories();
+  const { contractorRepository } = useRepositories();
 
   const categoryKey = categoryPluralMap[rawCategory] || rawCategory;
   const singularCat = rawCategory.replace(/s$/, '');
@@ -75,7 +75,7 @@ export default function Catalog() {
 
   useEffect(() => {
     let isMounted = true;
-    contractorsRepository.getContractors().then(list => {
+    contractorRepository.listProfiles().then(list => {
       if (!isMounted) return;
       if (list && list.length > 0) {
         setContractors(list);
@@ -86,7 +86,7 @@ export default function Catalog() {
       if (isMounted) setContractors(allContractorFixtures);
     });
     return () => { isMounted = false; };
-  }, [contractorsRepository]);
+  }, [contractorRepository]);
 
   const filteredContractors = React.useMemo(() => {
     return contractors.filter(c => {
@@ -154,8 +154,8 @@ export default function Catalog() {
           <EmptyState
             title="Исполнители не найдены"
             description="Попробуйте изменить параметры фильтра или выберите другую категорию."
-            actionLabel="Сбросить фильтры"
-            onAction={() => {
+            ctaText="Сбросить фильтры"
+            onCtaClick={() => {
               setSelectedCity('all');
               setMaxPrice(500000);
             }}

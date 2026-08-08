@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Sparkles, Search, Wallet, Wine, ArrowRight, Calendar, Users, Percent } from 'lucide-react';
+import { Sparkles, Search, Wallet, Wine, ArrowRight, Calendar, Users, Percent, Presentation } from 'lucide-react';
 import AppHeader from '../components/AppHeader';
 import BottomNavigation from '../components/BottomNavigation';
 import { useAuth } from '../context/AuthContext';
@@ -9,7 +9,7 @@ import { EventProject } from '../types';
 
 export default function Home() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isDemoMode } = useAuth();
   const [activeProject, setActiveProject] = useState<EventProject | null>(null);
   const [hasMultipleProjects, setHasMultipleProjects] = useState(false);
 
@@ -52,6 +52,16 @@ export default function Home() {
           <p className="text-sm sm:text-base text-[var(--text-secondary)] max-w-xl">
             Соберите мероприятие целиком или найдите нужных специалистов
           </p>
+          {isDemoMode && (
+            <button
+              type="button"
+              onClick={() => navigate('/demo')}
+              className="mt-2 inline-flex items-center gap-2 rounded-xl border border-[var(--gold-primary)]/35 bg-[var(--gold-primary)]/8 px-4 py-2.5 text-xs font-black text-[var(--gold-primary)] transition hover:bg-[var(--gold-primary)]/14 active:scale-[0.98]"
+            >
+              <Presentation className="h-4 w-4" />
+              Открыть презентационный режим
+            </button>
+          )}
         </div>
 
         {/* Active Project Card (Prodlzhit Podgotovku) */}

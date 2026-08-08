@@ -6,8 +6,8 @@ export default function Welcome() {
   const navigate = useNavigate();
 
   const handleStartDemo = () => {
-    startDemoMode('event_created');
-    navigate('/home');
+    startDemoMode('event_ready');
+    navigate('/demo');
   };
 
   const isDemoEnabled = (import.meta as any).env?.VITE_ENABLE_DEMO_MODE !== 'false';
@@ -65,7 +65,7 @@ export default function Welcome() {
               id="btn-welcome-demo"
               className="w-full py-3.5 px-6 rounded-xl font-medium transition-all duration-300 border border-[var(--gold-primary)]/45 bg-[var(--gold-primary)]/5 text-[var(--gold-primary)] hover:bg-[var(--gold-primary)]/10 hover:border-[var(--gold-primary)]/70 active:scale-[0.98] cursor-pointer"
             >
-              Посмотреть демо
+              Запустить презентацию
             </button>
           )}
         </div>

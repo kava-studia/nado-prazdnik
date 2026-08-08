@@ -29,7 +29,7 @@ export default function Packages() {
 
   const packages = [
     {
-      id: 'basic' as const,
+      id: 'budget_save' as const,
       name: 'Базовый',
       badge: 'Минимальный контроль',
       description: 'Идеально для камерных событий с небольшим числом гостей. Фокус на ключевых подрядчиках.',
@@ -48,7 +48,7 @@ export default function Packages() {
       additional: ['Координатор на день', 'Дополнительный свет', 'Печать пригласительных'],
     },
     {
-      id: 'optimal' as const,
+      id: 'balance' as const,
       name: 'Оптимальный',
       badge: 'Популярный выбор',
       description: 'Оптимальное соотношение цены и наполнения. Полная команда для полноценного торжества.',
@@ -71,7 +71,7 @@ export default function Packages() {
       additional: ['Кавер-группа или артисты', 'Профессиональный тяжелый дым', 'Трансфер гостей'],
     },
     {
-      id: 'maximal' as const,
+      id: 'accent' as const,
       name: 'Максимальный',
       badge: 'Всё включено',
       description: 'Премиальное наполнение без компромиссов. Сложная концепция, топ-команда и координация под ключ.',

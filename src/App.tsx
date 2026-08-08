@@ -11,6 +11,7 @@ import Auth from './pages/Auth';
 
 // Protected screens are downloaded only when the user opens them.
 const Home = lazy(() => import('./pages/Home'));
+const DemoPresentation = lazy(() => import('./pages/DemoPresentation'));
 const WorkspaceLayout = lazy(() => import('./components/WorkspaceLayout'));
 const ContractorCabinet = lazy(() => import('./components/workspace/ContractorCabinet'));
 const OrganizerCabinet = lazy(() => import('./components/workspace/OrganizerCabinet'));
@@ -117,6 +118,7 @@ export default function App() {
                       <Route path="admin" element={<AdminCabinet />} />
                     </Route>
                     <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+                    <Route path="/demo" element={<ProtectedRoute><DemoPresentation /></ProtectedRoute>} />
                     <Route path="/start" element={<ProtectedRoute><CreateEvent /></ProtectedRoute>} />
                     <Route path="/create-event" element={<ProtectedRoute><CreateEvent /></ProtectedRoute>} />
                     <Route path="/catalog/:category" element={<ProtectedRoute><Catalog /></ProtectedRoute>} />

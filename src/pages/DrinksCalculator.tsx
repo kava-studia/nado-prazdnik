@@ -255,8 +255,16 @@ export default function DrinksCalculator() {
       const updatedProject: EventProject = {
         ...activeProject,
         drinksCalculation: {
-          list: calculatedItems,
-          metrics: metrics
+          totalPrice: metrics.totalPrice,
+          corkFeeTotal: metrics.corkFeeTotal,
+          totalWithCork: metrics.totalWithCork,
+          savedDrinksList: calculatedItems.map((item) => ({
+            id: item.id,
+            name: item.name,
+            category: item.category,
+            bottles: item.bottles,
+            liters: item.liters
+          }))
         }
       };
       saveProject(updatedProject);
