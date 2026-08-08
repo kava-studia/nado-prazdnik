@@ -136,8 +136,8 @@ export default function App() {
                     <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
                     <Route path="/drinks-calculator" element={<ProtectedRoute><DrinksCalculator /></ProtectedRoute>} />
                     <Route path="/bookings" element={<ProtectedRoute><BookingsList /></ProtectedRoute>} />
-                    <Route path="/legal" element={<ProtectedRoute><Legal /></ProtectedRoute>} />
-                    <Route path="/legal/:documentKey" element={<ProtectedRoute><LegalDocumentPage /></ProtectedRoute>} />
+                    <Route path="/legal" element={<Legal />} />
+                    <Route path="/legal/:documentKey" element={<LegalDocumentPage />} />
                     <Route path="/profile/consents" element={<ProtectedRoute><ConsentsSettings /></ProtectedRoute>} />
                     <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                     <Route path="/disputes" element={<ProtectedRoute><Disputes /></ProtectedRoute>} />
