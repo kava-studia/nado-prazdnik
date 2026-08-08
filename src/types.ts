@@ -404,6 +404,7 @@ export interface EventPlanItem {
   category: EventServiceCategory;
   title: string;
   description: string;
+  /** @deprecated Состав мероприятия определяет клиент, обязательных этапов нет. */
   required: boolean;
   order: number;
   status: EventPlanStatus;

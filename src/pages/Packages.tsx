@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Sparkles, Check, Layers, Star, ArrowLeft } from 'lucide-react';
 import { getProjects, saveProject } from '../services/eventlyStorage';
 import { EventProject, BudgetCategory } from '../types';
+import { BOOKABLE_SERVICE_CATEGORIES } from '../data/eventPlanTemplates';
 
 export default function Packages() {
   const { eventId } = useParams<{ eventId: string }>();
@@ -44,7 +45,7 @@ export default function Packages() {
         'Фотограф': 0.12,
         'Напитки и закупка': 0.08
       },
-      obligatory: ['Аренда зала', 'Звуковое оборудование', 'Работа ведущего (4 ч)', 'Репортажная съемка (5 ч)'],
+      included: ['Аренда зала', 'Звуковое оборудование', 'Работа ведущего (4 ч)', 'Репортажная съемка (5 ч)'],
       additional: ['Координатор на день', 'Дополнительный свет', 'Печать пригласительных'],
     },
     {
@@ -67,7 +68,7 @@ export default function Packages() {
         'Закупка напитков': 0.04,
         'Организационные расходы': 0.0
       },
-      obligatory: ['Площадка с банкетным меню', 'Ведущий и сценарий (5 ч)', 'DJ с полным комплектом звука и света', 'Фото и видео съемка (8 ч)', 'Оформление президиума и столов'],
+      included: ['Площадка с банкетным меню', 'Ведущий и сценарий (5 ч)', 'DJ с полным комплектом звука и света', 'Фото и видео съемка (8 ч)', 'Оформление президиума и столов'],
       additional: ['Кавер-группа или артисты', 'Профессиональный тяжелый дым', 'Трансфер гостей'],
     },
     {
@@ -91,7 +92,7 @@ export default function Packages() {
         'Элитная карта напитков': 0.05,
         'Резерв': 0.02
       },
-      obligatory: ['Аренда премиум-локации', 'Гастрономическое меню', 'Режиссерский сценарий', 'Топ-ведущий', 'Концертный звук и световой дизайн', 'Сложный декор масштабных зон', 'Фото/видео команда (10-12 ч)'],
+      included: ['Аренда премиум-локации', 'Гастрономическое меню', 'Режиссерский сценарий', 'Топ-ведущий', 'Концертный звук и световой дизайн', 'Сложный декор масштабных зон', 'Фото/видео команда (10-12 ч)'],
       additional: ['Живой вокал на welcome', 'Подарки гостям', 'Салют / Огненное шоу'],
     }
   ];
@@ -111,11 +112,14 @@ export default function Packages() {
     });
 
     const updatedPlanItems = (project.planItems || []).map(item => {
-      const isRequiredInPkg = pkg.categories.includes(item.category);
+      const isIncludedInPackage = !BOOKABLE_SERVICE_CATEGORIES.has(item.category)
+        || pkg.categories.includes(item.category);
       return {
         ...item,
-        required: isRequiredInPkg,
-        status: isRequiredInPkg ? item.status : ('skipped' as const)
+        required: false,
+        status: isIncludedInPackage
+          ? item.status === 'skipped' ? ('not_started' as const) : item.status
+          : ('skipped' as const)
       };
     });
 
@@ -152,7 +156,7 @@ export default function Packages() {
         <div className="space-y-2">
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-[var(--color-text)]">Выбор концепции бюджета</h1>
           <p className="text-sm text-[var(--color-text-secondary)] font-semibold leading-relaxed max-w-xl">
-            Выберите готовую модель распределения бюджета и состава команды. Вы сможете скорректировать её в любой момент.
+            Это только стартовые варианты, а не обязательные наборы. Любую услугу можно убрать, вернуть или заменить в любой момент.
           </p>
         </div>
 
@@ -195,11 +199,11 @@ export default function Packages() {
                     <p className="text-[var(--color-text-secondary)] text-xs leading-relaxed font-semibold">{pkg.explanation}</p>
                   </div>
 
-                  {/* Obligatory Services */}
+                  {/* Included Services */}
                   <div className="space-y-2 text-xs">
                     <p className="font-bold text-[var(--color-text)] text-xs uppercase tracking-wider text-xs">Основные услуги:</p>
                     <ul className="space-y-1.5 pl-0.5">
-                      {pkg.obligatory.map((srv, idx) => (
+                      {pkg.included.map((srv, idx) => (
                         <li key={idx} className="flex items-start gap-1.5 text-xs text-[var(--color-text-secondary)] font-semibold leading-tight">
                           <Check className="w-3.5 h-3.5 text-[#3E8B65] shrink-0 mt-0.5" />
                           <span>{srv}</span>

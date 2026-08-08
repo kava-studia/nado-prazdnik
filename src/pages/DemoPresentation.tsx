@@ -36,7 +36,7 @@ const roleIcons: Record<PresentationRoleId, typeof UserRound> = {
 };
 
 const pitchSteps = [
-  { time: '1 мин', title: 'Задача клиента', text: 'Один запрос превращается в понятный проект.', icon: PartyPopper },
+  { time: '1 мин', title: 'Свободный состав', text: 'Клиент выбирает только нужные услуги. Обязательных подрядчиков нет.', icon: PartyPopper },
   { time: '2 мин', title: 'Готовый праздник', text: 'Покажите команду, смету, задачи и план подготовки.', icon: Gauge },
   { time: '2 мин', title: 'Экосистема ролей', text: 'Переключите исполнителя, площадку и организатора.', icon: UsersRound },
   { time: '2 мин', title: 'Контроль владельца', text: 'Завершите безопасностью, договорами и аудитом.', icon: ShieldCheck }
@@ -73,7 +73,7 @@ export default function DemoPresentation() {
                   <span className="block text-[var(--gold-primary)]">Одна управляемая система.</span>
                 </h1>
                 <p className="max-w-2xl text-sm sm:text-lg leading-relaxed text-[var(--text-secondary)]">
-                  NADO соединяет клиента, площадку, исполнителей, организатора и владельца платформы — от первого запроса до закрытого проекта.
+                  NADO собирает событие любого масштаба - от самостоятельного ужина без подрядчиков до проекта под ключ с площадкой, командой и организатором.
                 </p>
               </div>
 
@@ -187,8 +187,8 @@ export default function DemoPresentation() {
           <div className="rounded-3xl border border-[var(--border-primary)] bg-gradient-to-br from-[#151D2D] to-[#263550] p-6 sm:p-8 text-white shadow-xl">
             <LayoutDashboard className="h-8 w-8 text-[#DFC88F]" />
             <div className="mt-7 text-xs font-black uppercase tracking-[0.18em] text-[#DFC88F]">Главная мысль встречи</div>
-            <h2 className="mt-3 text-2xl sm:text-3xl font-black leading-tight">NADO не ищет отдельного подрядчика. NADO собирает весь праздник.</h2>
-            <p className="mt-4 text-sm leading-relaxed text-white/65">Ценность продукта появляется на стыке ролей, данных, договорённостей и контроля исполнения.</p>
+            <h2 className="mt-3 text-2xl sm:text-3xl font-black leading-tight">NADO собирает ровно тот праздник, который нужен человеку.</h2>
+            <p className="mt-4 text-sm leading-relaxed text-white/65">Без навязанных ведущих, диджеев и организаторов. Ценность появляется там, где клиенту действительно нужны подбор, договорённости и контроль.</p>
           </div>
 
           <div className="rounded-3xl border border-[var(--border-primary)] bg-[var(--surface-primary)] p-6 sm:p-8 shadow-sm">
@@ -229,4 +229,3 @@ export default function DemoPresentation() {
     </div>
   );
 }
-

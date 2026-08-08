@@ -16,20 +16,20 @@ export function calculateProjectProgress(planItems: EventPlanItem[]): number {
     confirmed: 80,
     booked: 90,
     completed: 100,
-    skipped: 100 // Counted as complete, but if it is optional we might ignore it or give full weight depending on state. Let's see.
+    skipped: 0
   };
 
   planItems.forEach((item) => {
-    // skipped - не учитывать, если этап необязательный
-    if (item.status === 'skipped' && !item.required) {
-      return; // Do not include in calculations at all
+    // Клиент сам определяет состав события. Убранные пункты не должны
+    // искусственно повышать или понижать готовность выбранного плана.
+    if (item.status === 'skipped') {
+      return;
     }
 
-    const weight = item.required ? 1.5 : 1.0;
     const progress = statusWeights[item.status] || 0;
 
-    totalWeight += weight;
-    earnedWeight += weight * (progress / 100);
+    totalWeight += 1;
+    earnedWeight += progress / 100;
   });
 
   if (totalWeight === 0) return 0;

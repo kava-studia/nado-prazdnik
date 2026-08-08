@@ -1,5 +1,9 @@
 import { EventProject, EventPlanItem, BudgetCategory, Task, Message, NadoEventSegment } from '../types';
-import { EVENT_PLAN_TEMPLATES } from '../data/eventPlanTemplates';
+import {
+  BOOKABLE_SERVICE_CATEGORIES,
+  BOOKABLE_SERVICE_OPTIONS,
+  EVENT_PLAN_TEMPLATES
+} from '../data/eventPlanTemplates';
 import { calculateProjectProgress } from '../utils/projectProgress';
 import { getSegment, calculateBudgetDistribution } from './nadoBudgetConsultant';
 import { generateEventPlan as generatePlannerData } from './aiEventPlanner';
@@ -17,6 +21,7 @@ export interface GeneratorInput {
   budgetTotal: number;
   style: string;
   alreadyHave: string[]; // e.g. ['venue', 'host'] or ['none']
+  requestedServices?: string[];
 }
 
 export function generateEventPlan(input: GeneratorInput): EventProject {
@@ -33,40 +38,73 @@ export function generateEventPlan(input: GeneratorInput): EventProject {
   if (cleanAlreadyHave.includes('none') || cleanAlreadyHave.length === 0) {
     cleanAlreadyHave = [];
   }
+  const requestedServices = Array.from(new Set(input.requestedServices || []));
 
   const selectedType = input.eventType || 'Свадьба';
-  const template = EVENT_PLAN_TEMPLATES[selectedType] || EVENT_PLAN_TEMPLATES['Другое'];
+  const baseTemplate = EVENT_PLAN_TEMPLATES[selectedType] || EVENT_PLAN_TEMPLATES['Другое'];
+  const templateCategories = new Set(baseTemplate.map((item) => item.category));
+  const extraSelectedServices = BOOKABLE_SERVICE_OPTIONS
+    .filter((option) => (
+      (requestedServices.includes(option.category) || cleanAlreadyHave.includes(option.category))
+      && !templateCategories.has(option.category)
+    ))
+    .map((option, index) => ({
+      ...option,
+      order: baseTemplate.length + index + 1,
+      required: false
+    }));
+  const template = [...baseTemplate, ...extraSelectedServices];
 
   // Map template items to real EventPlanItems
   const planItems: EventPlanItem[] = template.map((item) => {
     const hasService = cleanAlreadyHave.includes(item.category);
+    const wantsService = requestedServices.includes(item.category);
+    const isBookableService = BOOKABLE_SERVICE_CATEGORIES.has(item.category);
+    const isIncluded = !isBookableService || hasService || wantsService;
     return {
-      id: `plan-${item.category}-${projectId}`,
+      id: `plan-${item.category}-${item.order}-${projectId}`,
       category: item.category,
       title: item.title,
       description: item.description,
-      required: item.required,
+      required: false,
       order: item.order,
-      status: hasService ? 'completed' : 'not_started',
+      status: hasService ? 'completed' : isIncluded ? 'not_started' : 'skipped',
       route: item.route
     };
   });
 
   // Calculate neededServices
-  const allTemplateCategories = Array.from(new Set(template.map(item => item.category)));
-  const neededServices = allTemplateCategories.filter(cat => !cleanAlreadyHave.includes(cat));
+  const neededServices = requestedServices.filter((category) => !cleanAlreadyHave.includes(category));
 
   // Determine NADO budget segment
-  const budgetTotal = input.budgetTotal || 250000;
-  const nadoSegment = getSegment(budgetTotal, input.guestsCount);
+  const budgetTotal = Number.isFinite(input.budgetTotal) && input.budgetTotal >= 0
+    ? input.budgetTotal
+    : 0;
+  const nadoSegment = budgetTotal > 0
+    ? getSegment(budgetTotal, input.guestsCount)
+    : NadoEventSegment.CUSTOM;
 
   // Generate dynamic tasks and concepts via AI Event Planner
   const plannerData = generatePlannerData(selectedType, nadoSegment, input.guestsCount);
 
   // Map planner tasks into our real Tasks structure
-  const tasks: Task[] = plannerData.tasks.map((pt, idx) => {
+  const plannerCategoryToService: Record<string, string | undefined> = {
+    venue: 'venue',
+    hosts: 'host',
+    djs: 'dj',
+    decorators: 'decorator',
+    photo: 'photographer'
+  };
+  const selectedOrOwnedServices = new Set([...requestedServices, ...cleanAlreadyHave]);
+  const relevantPlannerTasks = plannerData.tasks.filter((task) => {
+    const serviceCategory = plannerCategoryToService[task.category];
+    return !serviceCategory || selectedOrOwnedServices.has(serviceCategory);
+  });
+
+  const tasks: Task[] = relevantPlannerTasks.map((pt, idx) => {
     // Check if user already booked this category
-    const isCompleted = cleanAlreadyHave.includes(pt.category);
+    const serviceCategory = plannerCategoryToService[pt.category];
+    const isCompleted = serviceCategory ? cleanAlreadyHave.includes(serviceCategory) : false;
     
     // Calculate dueDate based on event date minus days before, or fallback to +30 days
     let dueDate = '';
@@ -89,7 +127,28 @@ export function generateEventPlan(input: GeneratorInput): EventProject {
   });
 
   // Calculate budget distribution via NADO Budget Consultant
-  const distribution = calculateBudgetDistribution(budgetTotal, nadoSegment, []);
+  const baseDistribution = calculateBudgetDistribution(budgetTotal, nadoSegment, []);
+  const budgetCategoryIsRelevant: Record<string, boolean> = {
+    venue: selectedOrOwnedServices.has('venue') || selectedOrOwnedServices.has('catering'),
+    hosts: selectedOrOwnedServices.has('host') || selectedOrOwnedServices.has('organizer'),
+    djs: selectedOrOwnedServices.has('dj') || selectedOrOwnedServices.has('equipment'),
+    decorators: selectedOrOwnedServices.has('decorator') || selectedOrOwnedServices.has('florist'),
+    photo: selectedOrOwnedServices.has('photographer') || selectedOrOwnedServices.has('videographer'),
+    other: true
+  };
+  const filteredDistribution = baseDistribution.filter((item) => budgetCategoryIsRelevant[item.category]);
+  const filteredPercentageTotal = filteredDistribution.reduce((sum, item) => sum + item.percentage, 0) || 1;
+  let allocatedBudget = 0;
+  let allocatedPercentage = 0;
+  const distribution = filteredDistribution.map((item, index) => {
+    const isLast = index === filteredDistribution.length - 1;
+    const ratio = item.percentage / filteredPercentageTotal;
+    const percentage = isLast ? 100 - allocatedPercentage : Math.round(ratio * 100);
+    const amount = isLast ? budgetTotal - allocatedBudget : Math.round(budgetTotal * ratio);
+    allocatedBudget += amount;
+    allocatedPercentage += percentage;
+    return { ...item, percentage, amount };
+  });
   const budgetItems: BudgetCategory[] = [];
 
   const categoryNames: Record<string, string> = {
@@ -99,7 +158,7 @@ export function generateEventPlan(input: GeneratorInput): EventProject {
     djs: 'Диджей, звук и свет',
     decorators: 'Декор и оформление',
     photo: 'Фото и видеопродакшн',
-    other: 'Прочее и сувениры'
+    other: 'Свободный резерв'
   };
 
   distribution.forEach((item, idx) => {
@@ -118,14 +177,16 @@ export function generateEventPlan(input: GeneratorInput): EventProject {
       id: `msg-welcome-1-${projectId}`,
       sender: 'system',
       senderName: 'NADO Консультант',
-      text: `Ваш персональный интерактивный план «NADO ПРАЗДНИК» для события «${input.name || `Праздник в г. ${input.city}`}» успешно подготовлен! Мы определили уровень события как «${nadoSegment}» с бюджетом ${budgetTotal.toLocaleString('ru-RU')} ₽.`,
+      text: budgetTotal > 0
+        ? `Ваш персональный план «NADO ПРАЗДНИК» для события «${input.name || `Праздник в г. ${input.city}`}» готов. Ориентир бюджета - ${budgetTotal.toLocaleString('ru-RU')} ₽.`
+        : `Ваш персональный план «NADO ПРАЗДНИК» для события «${input.name || `Праздник в г. ${input.city}`}» готов. Бюджет пока не задан - его можно добавить позже без пересоздания проекта.`,
       timestamp: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
     },
     {
       id: `msg-welcome-2-${projectId}`,
       sender: 'system',
       senderName: 'NADO Консультант',
-      text: `«Что-то надо? Кидай в NADO»! Мы сгенерировали ${tasks.length} ключевых задач подготовки и распределили бюджет по приоритетным направлениям. Начните с шага 1: выберите площадку в нашем каталоге.`,
+      text: `«Что-то надо? Кидай в NADO»! Мы добавили только выбранные вами услуги и ${tasks.length} полезных задач. Любой пункт можно убрать или вернуть в план — состав праздника определяете вы.`,
       timestamp: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
     }
   ];

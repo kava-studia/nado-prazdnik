@@ -2,11 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getProjects, saveProject, getProjectById } from '../services/eventlyStorage';
 import { EventProject, EventPlanItem } from '../types';
-import { STATUS_TRANSLATIONS, CATEGORY_TRANSLATIONS } from '../data/eventPlanTemplates';
+import {
+  BOOKABLE_SERVICE_CATEGORIES,
+  STATUS_TRANSLATIONS,
+  CATEGORY_TRANSLATIONS
+} from '../data/eventPlanTemplates';
+import { calculateProjectProgress } from '../utils/projectProgress';
 import { 
   ArrowLeft, CheckCircle2, ChevronDown, ChevronRight, Play, AlertCircle, 
   MapPin, Calendar, Users, HelpCircle, FileCheck, Landmark, ShieldCheck 
 } from 'lucide-react';
+
+const COMPLETED_PLAN_STATUSES = new Set(['completed', 'confirmed', 'booked']);
 
 export default function EventPlan() {
   const { eventId } = useParams<{ eventId: string }>();
@@ -120,11 +127,17 @@ export default function EventPlan() {
     );
   }
 
-  const completedCount = project.planItems.filter(item => item.status === 'completed' || item.status === 'skipped').length;
-  const totalCount = project.planItems.length;
+  const includedItems = project.planItems.filter((item) => item.status !== 'skipped');
+  const completedCount = includedItems.filter((item) => (
+    item.status === 'completed' || item.status === 'confirmed' || item.status === 'booked'
+  )).length;
+  const totalCount = includedItems.length;
+  const currentProgress = calculateProjectProgress(project.planItems);
 
   // Determine "What to do right now" (Hero Block)
-  const activeStep = project.planItems.find(item => item.status !== 'completed' && item.status !== 'skipped');
+  const activeStep = project.planItems.find((item) => (
+    !COMPLETED_PLAN_STATUSES.has(item.status) && item.status !== 'skipped'
+  ));
 
   const getStepHeroTitle = (category: string) => {
     switch (category) {
@@ -168,10 +181,6 @@ export default function EventPlan() {
   };
 
   const handleSkipStep = (item: EventPlanItem) => {
-    if (item.required) {
-      alert('Обязательные этапы нельзя пропускать.');
-      return;
-    }
     const updatedItems = project.planItems.map(p => {
       if (p.id === item.id) {
         return { ...p, status: 'skipped' as const, skippedAt: new Date().toISOString() };
@@ -264,7 +273,7 @@ export default function EventPlan() {
           <div className="flex justify-between items-center mb-2 text-left">
             <div>
               <span className="text-xs text-[var(--color-text-secondary)] font-medium">Прогресс подготовки</span>
-              <h2 className="text-2xl font-black mt-0.5 text-[var(--color-text)]">{project.progressPercent}%</h2>
+              <h2 className="text-2xl font-black mt-0.5 text-[var(--color-text)]">{currentProgress}%</h2>
             </div>
             <span className="text-xs text-[var(--color-text-secondary)] font-mono bg-[var(--color-surface-raised)] border border-[var(--color-border)] px-2.5 py-1 rounded-xl">
               Выполнено {completedCount} из {totalCount}
@@ -273,7 +282,7 @@ export default function EventPlan() {
           <div className="w-full bg-[var(--color-background-soft)] h-2 rounded-full overflow-hidden mt-3">
             <div 
               className="bg-[var(--color-gold)] h-full rounded-full transition-all duration-500" 
-              style={{ width: `${project.progressPercent}%` }}
+              style={{ width: `${currentProgress}%` }}
             ></div>
           </div>
         </section>
@@ -297,7 +306,7 @@ export default function EventPlan() {
               {getStepHeroDesc(activeStep.category)}
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <button
                 onClick={() => navigate(`/events/${project.id}/plan/${activeStep.category}`)}
                 className="flex-1 py-3 px-4 premium-gold-button text-xs gap-1.5"
@@ -310,7 +319,16 @@ export default function EventPlan() {
                 onClick={() => handleMarkHave(activeStep)}
                 className="flex-1 py-3 px-4 bg-white hover:bg-[var(--color-surface-raised)] border border-[var(--color-border)] text-[var(--color-text)] text-xs font-bold rounded-xl transition-all cursor-pointer"
               >
-                У меня уже есть {CATEGORY_TRANSLATIONS[activeStep.category] || 'это'}
+                {BOOKABLE_SERVICE_CATEGORIES.has(activeStep.category)
+                  ? `У меня уже есть ${CATEGORY_TRANSLATIONS[activeStep.category] || 'это'}`
+                  : 'Этот этап уже готов'}
+              </button>
+
+              <button
+                onClick={() => handleSkipStep(activeStep)}
+                className="py-3 px-4 bg-transparent hover:bg-[var(--color-background-soft)] border border-[var(--color-border)] text-[var(--color-text-secondary)] text-xs font-bold rounded-xl transition-all cursor-pointer"
+              >
+                Не нужно для события
               </button>
             </div>
           </section>
@@ -325,7 +343,7 @@ export default function EventPlan() {
           <div className="space-y-3 text-left">
             {project.planItems.map((item, index) => {
               const isItemExpanded = !!expandedItems[item.id];
-              const isCompleted = item.status === 'completed';
+              const isCompleted = COMPLETED_PLAN_STATUSES.has(item.status);
               const isSkipped = item.status === 'skipped';
               const isCurrent = activeStep?.id === item.id;
 
@@ -364,9 +382,9 @@ export default function EventPlan() {
                           <h4 className="font-bold text-sm text-[var(--color-text)] truncate">
                             {CATEGORY_TRANSLATIONS[item.category] || item.title}
                           </h4>
-                          {item.required && (
-                            <span className="text-xs uppercase tracking-widest text-[var(--color-error)] font-bold">
-                              Обязательно
+                          {!isSkipped && (
+                            <span className="text-xs uppercase tracking-widest text-[var(--color-text-muted)] font-bold">
+                              По желанию
                             </span>
                           )}
                         </div>
@@ -404,16 +422,16 @@ export default function EventPlan() {
                             onClick={() => handleMarkHave(item)}
                             className="px-3 py-2 bg-white hover:bg-[var(--color-surface-raised)] border border-[var(--color-border)] text-[var(--color-text)] text-xs font-bold rounded-xl cursor-pointer transition-all"
                           >
-                            У меня уже есть
+                            {BOOKABLE_SERVICE_CATEGORIES.has(item.category) ? 'У меня уже есть' : 'Уже готово'}
                           </button>
                         )}
 
-                        {!item.required && !isSkipped && !isCompleted && (
+                        {!isSkipped && !isCompleted && (
                           <button
                             onClick={() => handleSkipStep(item)}
                             className="px-3 py-2 bg-transparent hover:bg-[var(--color-error)]/10 text-[var(--color-error)] text-xs font-semibold rounded-xl cursor-pointer transition-all"
                           >
-                            Пропустить
+                            Не нужно
                           </button>
                         )}
                       </div>

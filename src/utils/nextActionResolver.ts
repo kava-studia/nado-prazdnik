@@ -22,22 +22,17 @@ export function resolveNextAction(project: EventProject): NextAction {
     return item ? (item.status === 'completed' || item.status === 'confirmed' || item.status === 'booked' || item.status === 'skipped') : false;
   };
 
-  const isStartedOrMore = (cat: string): boolean => {
-    const item = findItem(cat);
-    return item ? item.status !== 'not_started' : false;
-  };
-
-  // 1. Venue is the absolute first dependency for almost everything
+  // Порядок — рекомендация, а не обязательная воронка.
   const venueItem = findItem('venue');
   if (venueItem && !isCompleted('venue')) {
     return {
-      title: 'Следующий шаг - выберите площадку',
+      title: 'Если нужна площадка - начните с неё',
       description: 'Площадка — основа мероприятия. От неё зависят кухня, декор, звуковое оборудование, рассадка гостей и возможный пробковый сбор.',
       buttonText: 'Подобрать площадку',
       route: '/catalog/venues',
       priority: 'high',
       reason: 'От площадки зависят кухня, декор, оборудование, рассадка и пробковый сбор.',
-      canSkip: false,
+      canSkip: true,
       category: 'venue'
     };
   }
@@ -52,7 +47,7 @@ export function resolveNextAction(project: EventProject): NextAction {
       route: '/catalog/catering',
       priority: 'high',
       reason: 'Банкетное меню или фуршет задают тон всему вечеру и составляют весомую часть сметы.',
-      canSkip: false,
+      canSkip: true,
       category: 'catering'
     };
   }
@@ -67,7 +62,7 @@ export function resolveNextAction(project: EventProject): NextAction {
       route: '/catalog/hosts',
       priority: 'high',
       reason: 'Ведущий пишет индивидуальный тайминг сценария, под который подстраивается вся остальная команда.',
-      canSkip: !hostItem.required,
+      canSkip: true,
       category: 'host'
     };
   }
@@ -82,7 +77,7 @@ export function resolveNextAction(project: EventProject): NextAction {
       route: '/catalog/djs',
       priority: 'high',
       reason: 'Диджей согласует плейлист и координирует технический райдер со звуковым оборудованием.',
-      canSkip: !djItem.required,
+      canSkip: true,
       category: 'dj'
     };
   }
@@ -97,7 +92,7 @@ export function resolveNextAction(project: EventProject): NextAction {
       route: '/catalog/photographers',
       priority: 'medium',
       reason: 'У хороших фотографов даты бронируются за несколько месяцев вперед.',
-      canSkip: !photoItem.required,
+      canSkip: true,
       category: 'photographer'
     };
   }
@@ -112,7 +107,7 @@ export function resolveNextAction(project: EventProject): NextAction {
       route: '/catalog/decorators',
       priority: 'medium',
       reason: 'Декор нельзя окончательно рассчитать и утвердить без выбранной площадки.',
-      canSkip: !decoratorItem.required,
+      canSkip: true,
       category: 'decorator'
     };
   }
@@ -127,7 +122,7 @@ export function resolveNextAction(project: EventProject): NextAction {
       route: '/catalog/equipment',
       priority: 'medium',
       reason: 'Звуковое и световое оборудование зависит от площадки, требований диджея и артистов.',
-      canSkip: !equipItem.required,
+      canSkip: true,
       category: 'equipment'
     };
   }
@@ -142,7 +137,7 @@ export function resolveNextAction(project: EventProject): NextAction {
       route: '/project?tab=tasks',
       priority: 'medium',
       reason: 'Точный список гостей необходим для заказа банкетных блюд и алкоголя.',
-      canSkip: false,
+      canSkip: true,
       category: 'guests'
     };
   }
@@ -157,7 +152,7 @@ export function resolveNextAction(project: EventProject): NextAction {
       route: '/project?tab=tasks',
       priority: 'medium',
       reason: 'Схема рассадки зависит от конфигурации площадки и точного списка подтвержденных гостей.',
-      canSkip: false,
+      canSkip: true,
       category: 'seating'
     };
   }
@@ -172,7 +167,7 @@ export function resolveNextAction(project: EventProject): NextAction {
       route: '/project?tab=tasks',
       priority: 'medium',
       reason: 'Меню зависит от возможностей выбранной площадки и требований кейтеринга.',
-      canSkip: false,
+      canSkip: true,
       category: 'menu'
     };
   }
@@ -187,7 +182,7 @@ export function resolveNextAction(project: EventProject): NextAction {
       route: '/drinks-calculator',
       priority: 'high',
       reason: 'Расчет закупки напитков и расчет пробкового сбора напрямую зависят от количества гостей и условий площадки.',
-      canSkip: false,
+      canSkip: true,
       category: 'drinks'
     };
   }
@@ -202,7 +197,7 @@ export function resolveNextAction(project: EventProject): NextAction {
       route: '/project?tab=tasks',
       priority: 'high',
       reason: 'Финальный тайминг согласуется с ведущим, площадкой, диджеем и координатором.',
-      canSkip: false,
+      canSkip: true,
       category: 'timeline'
     };
   }
@@ -217,7 +212,7 @@ export function resolveNextAction(project: EventProject): NextAction {
       route: '/catalog/coordinators',
       priority: 'medium',
       reason: 'Координатор возьмет на себя все заботы в день праздника, дав вам насладиться моментом.',
-      canSkip: !coordItem.required,
+      canSkip: true,
       category: 'coordinator'
     };
   }
@@ -232,7 +227,7 @@ export function resolveNextAction(project: EventProject): NextAction {
       route: '/project?tab=budget',
       priority: 'high',
       reason: 'Финальный аудит документов перед днем мероприятия исключает любые накладки.',
-      canSkip: false,
+      canSkip: true,
       category: 'documents'
     };
   }

@@ -577,7 +577,7 @@ export default function ProjectDashboard() {
 
               <div className="space-y-4 text-left">
                 {(project.planItems || []).map((item) => {
-                  const isDone = item.status === 'completed' || item.status === 'booked';
+                  const isDone = item.status === 'completed' || item.status === 'booked' || item.status === 'confirmed';
                   const isSkipped = item.status === 'skipped';
 
                   return (
@@ -596,9 +596,9 @@ export default function ProjectDashboard() {
                           <span className={`text-base font-bold ${isDone ? 'text-[var(--color-text-muted)] line-through' : 'text-[var(--color-text)]'}`}>
                             {item.title}
                           </span>
-                          {!item.required && (
+                          {!isSkipped && (
                             <span className="text-xs text-[var(--color-text-secondary)] font-bold border border-[var(--color-border)] px-2 py-0.5 rounded-full uppercase">
-                              Опционально
+                              По желанию
                             </span>
                           )}
                         </div>
@@ -614,14 +614,12 @@ export default function ProjectDashboard() {
                             >
                               Выполнено
                             </button>
-                            {!item.required && (
-                              <button
-                                onClick={() => handleSkipPlanItem(item.id)}
-                                className="px-3.5 py-1.5 bg-[var(--color-background-soft)] text-[var(--color-text-secondary)] text-xs font-bold rounded-xl hover:bg-[var(--color-border)] cursor-pointer"
-                              >
-                                Пропустить
-                              </button>
-                            )}
+                            <button
+                              onClick={() => handleSkipPlanItem(item.id)}
+                              className="px-3.5 py-1.5 bg-[var(--color-background-soft)] text-[var(--color-text-secondary)] text-xs font-bold rounded-xl hover:bg-[var(--color-border)] cursor-pointer"
+                            >
+                              Не нужно
+                            </button>
                           </>
                         )}
                         {isDone && (

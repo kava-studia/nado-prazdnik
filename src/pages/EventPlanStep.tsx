@@ -559,6 +559,19 @@ export default function EventPlanStep() {
         <section className="space-y-4">
           {renderContent()}
         </section>
+
+        {stepItem.status !== 'completed' && stepItem.status !== 'skipped' && (
+          <button
+            type="button"
+            onClick={() => {
+              updateStepStatus('skipped');
+              navigate(`/events/${eventId}/plan`);
+            }}
+            className="w-full rounded-xl border border-[var(--color-border)] bg-transparent px-4 py-3 text-xs font-bold text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-background-soft)]"
+          >
+            Убрать этот этап из моего плана
+          </button>
+        )}
       </main>
     </div>
   );

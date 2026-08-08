@@ -32,6 +32,9 @@ import {
 import { ProjectState, Task } from '../types';
 import { generateEventPlan } from '../services/eventPlanGenerator';
 import { saveProject, setActiveProjectId, getProjectById } from '../services/eventlyStorage';
+import { BOOKABLE_SERVICE_OPTIONS } from '../data/eventPlanTemplates';
+
+type ServiceChoice = 'need' | 'have';
 
 export default function CreateEvent() {
   const navigate = useNavigate();
@@ -43,13 +46,12 @@ export default function CreateEvent() {
   const [eventType, setEventType] = useState('');
   const [city, setCity] = useState('Москва');
   const [address, setAddress] = useState('');
-  const [venueChosen, setVenueChosen] = useState<string>(''); // 'yes' | 'no'
   const [date, setDate] = useState('');
   const [time, setTime] = useState('18:00');
   const [dateUnknown, setDateUnknown] = useState(false);
   const [guestsCount, setGuestsCount] = useState(30);
   const [budgetRange, setBudgetRange] = useState('');
-  const [alreadyHave, setAlreadyHave] = useState<string[]>([]);
+  const [serviceChoices, setServiceChoices] = useState<Record<string, ServiceChoice>>({});
   const [preferredStyles, setPreferredStyles] = useState<string[]>([]);
 
   // Validation & Save Error States
@@ -98,19 +100,6 @@ export default function CreateEvent() {
     'Пока не знаю'
   ];
 
-  const haveOptions = [
-    { label: 'Площадка', value: 'venue' },
-    { label: 'Ведущий', value: 'host' },
-    { label: 'Диджей', value: 'dj' },
-    { label: 'Фотограф', value: 'photographer' },
-    { label: 'Видеограф', value: 'videographer' },
-    { label: 'Декоратор', value: 'decorator' },
-    { label: 'Кейтеринг', value: 'catering' },
-    { label: 'Звук и свет', value: 'equipment' },
-    { label: 'Артисты', value: 'artists' },
-    { label: 'Пока ничего', value: 'none' }
-  ];
-
   const handleNext = () => {
     setError('');
 
@@ -157,17 +146,16 @@ export default function CreateEvent() {
     }
   };
 
-  const toggleAlreadyHave = (val: string) => {
-    if (val === 'none') {
-      setAlreadyHave(['none']);
-      return;
-    }
-    const filtered = alreadyHave.filter(item => item !== 'none');
-    if (filtered.includes(val)) {
-      setAlreadyHave(filtered.filter(item => item !== val));
-    } else {
-      setAlreadyHave([...filtered, val]);
-    }
+  const setServiceChoice = (category: string, choice?: ServiceChoice) => {
+    setServiceChoices((current) => {
+      const next = { ...current };
+      if (!choice || current[category] === choice) {
+        delete next[category];
+      } else {
+        next[category] = choice;
+      }
+      return next;
+    });
   };
 
   const togglePreferredStyle = (val: string) => {
@@ -190,7 +178,14 @@ export default function CreateEvent() {
     else if (budgetRange === '1000000') budgetTotal = 750000;
     else if (budgetRange === '2000000') budgetTotal = 1500000;
     else if (budgetRange === '5000000') budgetTotal = 3500000;
-    else budgetTotal = 500000; // default Classic
+    else budgetTotal = 0;
+
+    const alreadyHave = Object.entries(serviceChoices)
+      .filter(([, choice]) => choice === 'have')
+      .map(([category]) => category);
+    const requestedServices = Object.entries(serviceChoices)
+      .filter(([, choice]) => choice === 'need')
+      .map(([category]) => category);
 
     const newProject = generateEventPlan({
       eventType,
@@ -203,7 +198,8 @@ export default function CreateEvent() {
       budgetRange,
       budgetTotal,
       style: preferredStyles.join(', '),
-      alreadyHave
+      alreadyHave,
+      requestedServices
     });
 
     const saveResult = saveProject(newProject);
@@ -311,27 +307,40 @@ export default function CreateEvent() {
                     />
                     
                     <div className="space-y-2 mt-4">
-                      <label className="text-xs sm:text-sm font-bold text-[var(--text-secondary)] pl-1">Площадка уже арендована?</label>
-                      <div className="grid grid-cols-2 gap-3">
+                      <label className="text-xs sm:text-sm font-bold text-[var(--text-secondary)] pl-1">Что делаем с площадкой?</label>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <button
-                          onClick={() => setVenueChosen('yes')}
+                          onClick={() => setServiceChoice('venue', 'have')}
+                          aria-pressed={serviceChoices.venue === 'have'}
                           className={`p-3.5 rounded-[14px] border text-xs sm:text-sm font-bold transition-all cursor-pointer shadow-sm ${
-                            venueChosen === 'yes'
+                            serviceChoices.venue === 'have'
                               ? 'bg-[var(--gold-highlight)] border-[var(--gold-primary)] text-[var(--gold-deep)] font-black'
                               : 'bg-[var(--background-elevated)] border-[var(--border-soft)] text-[var(--text-secondary)]'
                           }`}
                         >
-                          Да, площадка выбрана
+                          Уже выбрана
                         </button>
                         <button
-                          onClick={() => setVenueChosen('no')}
+                          onClick={() => setServiceChoice('venue', 'need')}
+                          aria-pressed={serviceChoices.venue === 'need'}
                           className={`p-3.5 rounded-[14px] border text-xs sm:text-sm font-bold transition-all cursor-pointer shadow-sm ${
-                            venueChosen === 'no'
+                            serviceChoices.venue === 'need'
                               ? 'bg-[var(--gold-highlight)] border-[var(--gold-primary)] text-[var(--gold-deep)] font-black'
                               : 'bg-[var(--background-elevated)] border-[var(--border-soft)] text-[var(--text-secondary)]'
                           }`}
                         >
-                          Нет, в поиске
+                          Нужно найти
+                        </button>
+                        <button
+                          onClick={() => setServiceChoice('venue')}
+                          aria-pressed={!serviceChoices.venue}
+                          className={`p-3.5 rounded-[14px] border text-xs sm:text-sm font-bold transition-all cursor-pointer shadow-sm ${
+                            !serviceChoices.venue
+                              ? 'bg-[var(--gold-highlight)] border-[var(--gold-primary)] text-[var(--gold-deep)] font-black'
+                              : 'bg-[var(--background-elevated)] border-[var(--border-soft)] text-[var(--text-secondary)]'
+                          }`}
+                        >
+                          Пока не нужна
                         </button>
                       </div>
                     </div>
@@ -429,31 +438,58 @@ export default function CreateEvent() {
                 </div>
               )}
 
-              {/* STEP 6: Already Have */}
+              {/* STEP 6: Event composition */}
               {step === 6 && (
                 <div className="space-y-5 animate-fade-in text-left">
                   <PageTitle 
-                    title="Что вы уже забронировали?" 
-                    subtitle="Мы автоматически уберем эти позиции из первоочередного чек-листа" 
+                    title="Что включаем в ваш праздник?"
+                    subtitle="Ничего обязательного. Отметьте, что нужно найти через NADO и что у вас уже есть. Остальное не попадёт в прогресс"
                   />
-                  <div className="grid grid-cols-2 gap-3">
-                    {haveOptions.map((opt) => {
-                      const isSelected = alreadyHave.includes(opt.value);
+                  <div className="rounded-[16px] border border-[var(--gold-primary)]/20 bg-[var(--gold-highlight)]/45 p-4 text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed">
+                    Хотите камерный ужин без ведущего, домашнюю вечеринку без площадки или событие без организатора - всё нормально. План подстраивается под вас, а не наоборот.
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {BOOKABLE_SERVICE_OPTIONS.map((opt) => {
+                      const choice = serviceChoices[opt.category];
                       return (
-                        <button
-                          key={opt.value}
-                          onClick={() => toggleAlreadyHave(opt.value)}
-                          className={`p-4 rounded-[18px] border text-left transition-all cursor-pointer flex items-center justify-between shadow-sm ${
-                            isSelected
-                              ? 'bg-[var(--gold-highlight)] border-[var(--gold-primary)] text-[var(--gold-deep)] font-black'
-                              : 'bg-[var(--background-elevated)] border-[var(--border-soft)] text-[var(--text-secondary)]'
+                        <div
+                          key={opt.category}
+                          className={`p-4 rounded-[18px] border text-left transition-all shadow-sm ${
+                            choice
+                              ? 'bg-[var(--gold-highlight)]/55 border-[var(--gold-primary)]/60'
+                              : 'bg-[var(--background-elevated)] border-[var(--border-soft)]'
                           }`}
                         >
-                          <span className="font-extrabold text-xs sm:text-sm">{opt.label}</span>
-                          <div className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 ml-2 ${isSelected ? 'border-[var(--gold-primary)] bg-[var(--gold-primary)]' : 'border-[var(--border-soft)]'}`}>
-                            {isSelected && <Check className="w-3.5 h-3.5 text-[#171A20] stroke-[3]" />}
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="font-extrabold text-sm text-[var(--text-primary)]">{opt.label}</p>
+                              <p className="text-xs text-[var(--text-secondary)] leading-relaxed mt-1">{opt.description}</p>
+                            </div>
+                            {choice && (
+                              <div className="w-5 h-5 rounded-full bg-[var(--gold-primary)] flex items-center justify-center shrink-0">
+                                <Check className="w-3.5 h-3.5 text-[#171A20] stroke-[3]" />
+                              </div>
+                            )}
                           </div>
-                        </button>
+                          <div className="grid grid-cols-2 gap-2 mt-3">
+                            <button
+                              type="button"
+                              onClick={() => setServiceChoice(opt.category, 'need')}
+                              aria-pressed={choice === 'need'}
+                              className={`px-2 py-2 rounded-xl border text-xs font-bold cursor-pointer transition-colors ${choice === 'need' ? 'bg-[var(--gold-primary)] border-[var(--gold-primary)] text-[#171A20]' : 'bg-white/70 border-[var(--border-soft)] text-[var(--text-secondary)]'}`}
+                            >
+                              Нужно найти
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setServiceChoice(opt.category, 'have')}
+                              aria-pressed={choice === 'have'}
+                              className={`px-2 py-2 rounded-xl border text-xs font-bold cursor-pointer transition-colors ${choice === 'have' ? 'bg-[#EAF5EE] border-[#3E8B65]/40 text-[#3E8B65]' : 'bg-white/70 border-[var(--border-soft)] text-[var(--text-secondary)]'}`}
+                            >
+                              Уже есть
+                            </button>
+                          </div>
+                        </div>
                       );
                     })}
                   </div>

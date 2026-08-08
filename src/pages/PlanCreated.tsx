@@ -46,7 +46,7 @@ export default function PlanCreated() {
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-[var(--color-text)] tracking-tight">Ваш план готов!</h1>
           <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] max-w-md mx-auto leading-relaxed">
-            Мы собрали основные этапы подготовки. Вы можете двигаться по шагам или посмотреть готовые пакетные предложения.
+            Мы собрали персональный план только из выбранных услуг. Любой этап можно убрать, вернуть или пройти самостоятельно.
           </p>
         </div>
 
@@ -95,9 +95,9 @@ export default function PlanCreated() {
           </div>
 
           <div className="pt-3 border-t border-[var(--color-border)] flex items-center justify-between text-xs font-bold text-[var(--color-text-secondary)]">
-            <span>Всего этапов подготовки:</span>
+            <span>Этапов в вашем плане:</span>
             <span className="text-[var(--color-text)] font-mono bg-white border border-[var(--color-border)] px-3 py-1 rounded-full shadow-sm">
-              {project.planItems?.length || 0} шагов
+              {project.planItems?.filter((item) => item.status !== 'skipped').length || 0} шагов
             </span>
           </div>
         </div>

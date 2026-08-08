@@ -56,8 +56,7 @@ export const PRESENTATION_ROLES: PresentationRole[] = [
 
 export const PRESENTATION_METRICS = [
   { value: '5', label: 'ролей в одной системе' },
-  { value: '15', label: 'готовых демо сценариев' },
+  { value: '13', label: 'категорий услуг по выбору' },
   { value: '31', label: 'шаблон договора' },
-  { value: '1', label: 'управляемый проект' }
+  { value: '0', label: 'обязательных подрядчиков' }
 ] as const;
-
